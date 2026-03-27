@@ -13,10 +13,9 @@ import java.net.SocketTimeoutException;
 //class thats used in a thread and represents a user in the game
 public class ClientHandler implements Runnable {
 
-     private final Socket socket;
+    private final Socket socket;
     private final int playerId;
     private final HangmanState gameState;
-    private final HangmanServer server;
 
     private PrintWriter out;
     private BufferedReader in;
@@ -24,11 +23,10 @@ public class ClientHandler implements Runnable {
     private String currentGuess = "";      //current play
     private boolean guessReceived = false; //to synchoronize
 
-     public ClientHandler(Socket socket, int playerId, HangmanState gameState, HangmanServer server) {
+    public ClientHandler(Socket socket, int playerId, HangmanState gameState) {
         this.socket = socket;
         this.playerId = playerId;
         this.gameState = gameState;
-        this.server = server;
     }
 
     @Override
@@ -95,16 +93,32 @@ public class ClientHandler implements Runnable {
      * called by HangmanServer at the beginning of each round.
      * sets the timeout and awaits client GUESS.
      * if timeout expires, GUESS "".
-     * TODO this
      */
-    public void waitGuess() {
+    public synchronized void waitGuess() throws IOException {
+        guessReceived = false;
+        currentGuess = "";
+        try {
+            String line = in.readLine();
+            if (line != null && line.startsWith("GUESS ")) {
+                currentGuess = line.substring(6).trim();
+            }
+        } catch (SocketTimeoutException e) {
+            // timeout expired — currentGuess stays ""
+        } finally {
+            guessReceived = true;
+            notifyAll();
+        }
     }
 
     /**
-     * sets round timeout.
-     * TODO this
+     * sets round timeout via socket SO_TIMEOUT so readLine() unblocks after ms.
      */
     public void setRoundTimeout(int ms) {
+        try {
+            socket.setSoTimeout(ms);
+        } catch (SocketException e) {
+            e.printStackTrace();
+        }
     }
 
     public void close() {

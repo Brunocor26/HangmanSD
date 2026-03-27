@@ -30,7 +30,7 @@ public class HangmanServer {
             while (players.size() < MAX_PLAYERS) {
                 Socket socket = server.accept();
                 int playerId = players.size() + 1;
-                ClientHandler handler = new ClientHandler(socket, playerId, game_state, this);
+                ClientHandler handler = new ClientHandler(socket, playerId, game_state);
                 players.add(handler);
                 System.out.println("Jogador " + playerId + " entrou! Bem vindo.");
             }
