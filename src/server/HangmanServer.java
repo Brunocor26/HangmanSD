@@ -1,6 +1,7 @@
 package src.server;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,24 +14,37 @@ public class HangmanServer {
     private ArrayList<ClientHandler> players = new ArrayList<>();
     private static HangmanState game_state;
 
-    private boolean game_started = false;
+    private volatile boolean game_started = false;
 
 
     public static void main(String args[]) throws IOException {
+        new HangmanServer().start();
+    }
 
-        try{
-        game_state = new HangmanState(HangmanWords.getRandomWord());
-        //open serverSOcket
-        ServerSocket server= new ServerSocket(PORT);
-        System.out.println("Server running, waiting for players to connect.");
+    public void start() {
+        try {
+            game_state = new HangmanState(HangmanWords.getRandomWord());
+            ServerSocket server = new ServerSocket(PORT);
+            System.out.println("Servidor a funcionar, à espera de jogadores.");
 
-        } catch(IOException e){
-            System.out.println("Error: " + e.getMessage());
+            while (players.size() < MAX_PLAYERS) {
+                Socket socket = server.accept();
+                int playerId = players.size() + 1;
+                ClientHandler handler = new ClientHandler(socket, playerId, game_state, this);
+                players.add(handler);
+                System.out.println("Jogador " + playerId + " entrou! Bem vindo.");
+            }
+
+            game_started = true;
+
+            for (ClientHandler player : players) {
+                player.sendWelcome(players.size());
+                new Thread(player).start();
+            }
+
+            
+        } catch (IOException e) {
+            System.out.println("Erro: " + e.getMessage());
         }
-        
-
-        //inicializar gamestate com a palavra aleatoria escolhida
-
-
     }
 }

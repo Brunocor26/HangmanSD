@@ -95,14 +95,14 @@ public class ClientHandler implements Runnable {
      * called by HangmanServer at the beginning of each round.
      * sets the timeout and awaits client GUESS.
      * if timeout expires, GUESS "".
-     * @TODO this
+     * TODO this
      */
     public void waitGuess() {
     }
 
     /**
      * sets round timeout.
-     * @TODO this
+     * TODO this
      */
     public void setRoundTimeout(int ms) {
     }
