@@ -9,75 +9,65 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import src.common.Protocol;
 
-//class thats used in a thread and represents a user in the game
-public class ClientHandler implements Runnable {
+// represents one player's connection; used by HangmanServer to send/receive messages
+public class ClientHandler {
 
     private final Socket socket;
     private final int playerId;
-    private final HangmanState gameState;
 
-    private PrintWriter out;
-    private BufferedReader in;
+    private final PrintWriter out;
+    private final BufferedReader in;
 
-    private String currentGuess = "";      //current play
-    private boolean guessReceived = false; //to synchoronize
+    private String currentGuess = "";      // current play
+    private boolean guessReceived = false; // synchronization flag
 
-    public ClientHandler(Socket socket, int playerId, HangmanState gameState) {
+    public ClientHandler(Socket socket, int playerId) throws IOException {
         this.socket = socket;
         this.playerId = playerId;
-        this.gameState = gameState;
+        this.out = new PrintWriter(new BufferedWriter(
+                new OutputStreamWriter(socket.getOutputStream())), true);
+        this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
     }
 
-    @Override
-    public void run() {
-        //initialize the buff
-        try{
-            out= new PrintWriter(new BufferedWriter(
-                new OutputStreamWriter(socket.getOutputStream())
-            ), true);
+    // getters
 
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-            while (!gameState.isFinished()){
-                waitGuess();
-        }
-        }catch(IOException e){
-            System.out.println("Jogador " + playerId + " desconectou: " + e.getMessage());
-        } finally {
-            close();
-        }
-        
+    public int getPlayerId() {
+        return playerId;
     }
 
+    public String getCurrentGuess() {
+        return currentGuess;
+    }
 
-    //------------------------messages (set by the defined protocol)-------------------------------------------
+    // messages (server -> client)
     public void sendWelcome(int totalPlayers) {
-        send("WELCOME " + playerId + " " + totalPlayers);
+        send(Protocol.welcome(playerId, totalPlayers));
     }
 
     public void sendStart(String mask, int attempts, int roundTimeoutMs) {
-        send("START " + mask + " " + attempts + " " + roundTimeoutMs);
+        send(Protocol.start(mask, attempts, roundTimeoutMs));
     }
 
     public void sendRound(int round, String mask, int attempts, String usedLetters) {
-        send("ROUND " + round + " " + mask + " " + attempts + " " + usedLetters);
+        send(Protocol.round(round, mask, attempts, usedLetters));
     }
 
     public void sendState(String mask, int attempts, String usedLetters) {
-        send("STATE " + mask + " " + attempts + " " + usedLetters);
+        send(Protocol.state(mask, attempts, usedLetters));
     }
 
     public void sendEndWin(String winnerIds, String word) {
-        send("END WIN " + winnerIds + " " + word);
+        send(Protocol.endWin(winnerIds, word));
     }
 
     public void sendEndLose(String word) {
-        send("END LOSE " + word);
+        send(Protocol.endLose(word));
     }
 
     public void sendFull() {
-        send("FULL");
+        send(Protocol.FULL);
     }
 
     private void send(String message) {
@@ -86,7 +76,7 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    //-------------------------------------------------------receiving the client response------------------------------
+    // receiving the client response (client -> server)
 
 
     /**
@@ -99,11 +89,11 @@ public class ClientHandler implements Runnable {
         currentGuess = "";
         try {
             String line = in.readLine();
-            if (line != null && line.startsWith("GUESS ")) {
-                currentGuess = line.substring(6).trim();
+            if (line != null && line.startsWith(Protocol.GUESS + " ")) {
+                currentGuess = line.substring(Protocol.GUESS.length() + 1).trim();
             }
         } catch (SocketTimeoutException e) {
-            // timeout expired — currentGuess stays ""
+            // timeout expired -> currentGuess stays ""
         } finally {
             guessReceived = true;
             notifyAll();

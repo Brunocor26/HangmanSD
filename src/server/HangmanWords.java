@@ -15,7 +15,7 @@ public class HangmanWords {
         "VOLEI", "RUGBY", "GOLFE", "HIPISMO", "JUDO",
         // Alimentos
         "PIZZA", "MASSA", "ARROZ", "FEIJAO", "SOPA",
-        "PEIXE", "FRANGO", "TOMATE", "CEBOLA", "ALHO",
+        "BACALHAU", "FRANGO", "TOMATE", "CEBOLA", "ALHO",
         // Profissões
         "MEDICO", "PILOTO", "PINTOR", "MUSICO", "JUIZ",
         "ATOR", "CHEF", "ARQUITETO", "DENTISTA", "FARMACEUTICO",
@@ -35,7 +35,7 @@ public class HangmanWords {
         "SERVIDOR", "REDE", "PROTOCOLO", "SOCKET", "THREAD",
         "ALGORITMO", "SOFTWARE", "HARDWARE", "COMPILADOR", "MEMORIA",
         // Plantas
-        "ROSA", "TULIPA", "ORQUIDEA", "CACTO", "BAMBU",
+        "LOUREIRO", "TULIPA", "ORQUIDEA", "CACTO", "BAMBU",
         "PINHEIRO", "CARVALHO", "OLIVEIRA", "GIRASSOL", "MARGARIDA",
         // Instrumentos
         "GUITARRA", "PIANO", "VIOLINO", "FLAUTA", "BATERIA",
@@ -56,5 +56,9 @@ public class HangmanWords {
 
     public static int size() {
         return WORDS.length;
+    }
+
+    public static String[] getWords() {
+        return WORDS.clone();
     }
 }
