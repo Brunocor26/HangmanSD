@@ -86,6 +86,10 @@ public class HangmanState {
         return attemptsLeft;
     }
 
+    public synchronized void decrementAttempts() {
+        attemptsLeft--;
+    }
+
     public synchronized int getRound() {
         return round;
     }

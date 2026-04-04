@@ -215,6 +215,22 @@ public class HangmanStateTest {
         assertEquals("A", s.getMask());
     }
 
+    // Timeout (decrementAttempts)
+
+    @Test
+    void decrementAttemptsReducesByOne() {
+        int before = state.getAttemptsLeft();
+        state.decrementAttempts();
+        assertEquals(before - 1, state.getAttemptsLeft());
+    }
+
+    @Test
+    void decrementAttemptsCanReachZero() {
+        for (int i = 0; i < Protocol.MAX_ATTEMPTS; i++)
+            state.decrementAttempts();
+        assertEquals(0, state.getAttemptsLeft());
+    }
+
     // Null/empty guess não lança exceção
 
     @Test
