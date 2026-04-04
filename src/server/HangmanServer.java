@@ -1,6 +1,9 @@
 package src.server;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
@@ -28,7 +31,7 @@ public class HangmanServer {
             // aguarda primeiro jogador sem timeout
             Socket first = serverSocket.accept();
             players.add(new ClientHandler(first, 1));
-            System.out.println("Jogador 1 entrou. Aguardando mais jogadores (" + Protocol.LOBBY_TIMEOUT_MS / 1000 + "s timeout)...");
+            System.out.println("Jogador 1 entrou. A aguardar mais jogadores (" + Protocol.LOBBY_TIMEOUT_MS / 1000 + "s timeout)...");
 
             // depois do primeiro, timeout de lobby para os restantes
             serverSocket.setSoTimeout(Protocol.LOBBY_TIMEOUT_MS);
@@ -47,6 +50,25 @@ public class HangmanServer {
                 System.out.println("Jogadores insuficientes (mínimo: " + Protocol.MIN_PLAYERS + "). A terminar.");
                 return;
             }
+
+            // rejeita ligações tardias com FULL enquanto o jogo decorre
+            serverSocket.setSoTimeout(0);
+            Thread rejector = new Thread(() -> {
+                while (true) {
+                    try {
+                        Socket late = serverSocket.accept();
+                        PrintWriter pw = new PrintWriter(
+                                new BufferedWriter(new OutputStreamWriter(late.getOutputStream())), true);
+                        pw.println(Protocol.FULL);
+                        late.close();
+                        System.out.println("Ligação tardia rejeitada (FULL).");
+                    } catch (IOException e) {
+                        break; // serverSocket fechou — jogo terminou
+                    }
+                }
+            });
+            rejector.setDaemon(true);
+            rejector.start();
 
             runGame();
 
@@ -91,7 +113,7 @@ public class HangmanServer {
                     try {
                         player.waitGuess();
                     } catch (IOException e) {
-                        System.out.println("Jogador " + player.getPlayerId() + " desconectou.");
+                        System.out.println("Jogador " + player.getPlayerId() + " desconectou-se.");
                     }
                 }));
             }
@@ -102,20 +124,23 @@ public class HangmanServer {
             // processa guesses e determina vencedores
             List<Integer> winners = new ArrayList<>();
             for (ClientHandler player : players) {
-                if (gameState.isFinished()) break;
-
                 String guess = player.getCurrentGuess();
+
                 if (guess.isEmpty()) {
-                    System.out.println("Jogador " + player.getPlayerId() + " não respondeu (timeout).");
+                    // fix 1: timeout consome uma tentativa
+                    System.out.println("Jogador " + player.getPlayerId() + " não respondeu (timeout). -1 tentativa.");
+                    gameState.decrementAttempts();
                     continue;
                 }
 
                 System.out.println("Jogador " + player.getPlayerId() + " jogou: " + guess);
+
+                // fix 3: verificar ANTES de processar para detetar quem completou a palavra
+                boolean wasComplete = gameState.isWordGuessed();
                 gameState.processGuess(guess);
 
-                if (gameState.isWordGuessed()) {
+                if (!wasComplete && gameState.isWordGuessed()) {
                     winners.add(player.getPlayerId());
-                    gameState.setFinished(true);
                 }
             }
 
