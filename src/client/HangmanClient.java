@@ -105,7 +105,7 @@ public class HangmanClient {
         int attempts = Integer.parseInt(parts[3]);
         String usedLetters = parts.length > 4 ? parts[4] : "";
 
-        System.out.printf("%-------------------Ronda %d -------------------%n", round);
+        System.out.printf("------------------- Ronda %d -------------------%n", round);
         printState(mask, attempts, usedLetters);
 
         sendGuess();

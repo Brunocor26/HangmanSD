@@ -32,30 +32,42 @@ public class HangmanServer {
             Socket first = serverSocket.accept();
             players.add(new ClientHandler(first, 1));
             System.out.println("Jogador 1 entrou. A aguardar mais jogadores (" + Protocol.LOBBY_TIMEOUT_MS / 1000 + "s timeout)...");
+            // Prazo absoluto para o lobby (20s após o primeiro jogador entrar)
+            long lobbyEndTime = System.currentTimeMillis() + Protocol.LOBBY_TIMEOUT_MS;
 
-            // depois do primeiro, timeout de lobby para os restantes
-            // TODO: O timeout do lobby não é absoluto. O requisito pede que expire 20s após a entrada do 1º jogador.
-            // Atualmente, cada accept() reinicia a janela de 20s. Deve ser calculado o tempo restante.
-            serverSocket.setSoTimeout(Protocol.LOBBY_TIMEOUT_MS);
-            try {
-                while (players.size() < Protocol.MAX_PLAYERS) {
+            while (players.size() < Protocol.MAX_PLAYERS) {
+                long timeLeftMs = lobbyEndTime - System.currentTimeMillis();
+                if (timeLeftMs <= 0) break;
+
+                // Se faltarem mais de 5s, esperamos até chegar à marca dos 5s
+                // Se faltarem 5s ou menos, usamos timeout de 1s para fazer a contagem no ecrã
+                int nextTimeout = (timeLeftMs > 5000) ? (int)(timeLeftMs - 5000) : 1000;
+
+                try {
+                    serverSocket.setSoTimeout(nextTimeout);
                     Socket socket = serverSocket.accept();
-                    //sincronizacao p garantir que a leitura do size e adicionar o jogador seja atomico
-                    //sem isto tinhamos race condition
                     synchronized (players) {
                         if (players.size() < Protocol.MAX_PLAYERS) {
                             int id = players.size() + 1;
                             players.add(new ClientHandler(socket, id));
                             System.out.println("Jogador " + id + " entrou.");
                         } else {
-                            //rejeita a ligacao caso o lobby tenha enchido enquanto esperavamos
                             socket.close();
                         }
                     }
+                } catch (SocketTimeoutException e) {
+                    // Acontece quando o timeout de 'nextTimeout' expira
+                    long remaining = lobbyEndTime - System.currentTimeMillis();
+                    if (remaining <= 5000 && remaining > 0) {
+                        System.out.println("Lobby fecha em " + (remaining / 1000 + 1) + " segundos...");
+                    }
+                } catch (IOException e) {
+                    System.out.println("Erro ao aceitar jogador: " + e.getMessage());
+                    break;
                 }
-            } catch (SocketTimeoutException e) {
-                System.out.println("Timeout do lobby. A iniciar com " + players.size() + " jogador(es).");
             }
+
+            System.out.println("Lobby fechado. Jogadores totais: " + players.size());
 
             if (players.size() < Protocol.MIN_PLAYERS) {
                 System.out.println("Jogadores insuficientes (mínimo: " + Protocol.MIN_PLAYERS + "). A terminar.");
@@ -186,4 +198,25 @@ public class HangmanServer {
 
         System.out.println("Jogo terminado.");
     }
+
+    public final static void clearConsole()
+{
+    try
+    {
+        final String os = System.getProperty("os.name");
+        
+        if (os.contains("Windows"))
+        {
+            Runtime.getRuntime().exec(new String[]{"cmd", "/c", "cls"});
+        }
+        else //linux e mac(?)
+        {
+            Runtime.getRuntime().exec(new String[]{"sh", "-c", "clear"});
+        }
+    }
+    catch (final Exception e)
+    {
+        //  Handle any exceptions.
+    }
+}
 }
