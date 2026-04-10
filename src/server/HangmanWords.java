@@ -3,6 +3,7 @@ package src.server;
 import java.util.Random;
 
 public class HangmanWords {
+    // TODO: A lista de palavras tem 140 elementos. O requisito pede uma lista fixa de exatamente 100 palavras.
     private static final String[] WORDS = {
         // Animais
         "GATO", "CACAO", "LEAO", "TIGRE", "ZEBRA",

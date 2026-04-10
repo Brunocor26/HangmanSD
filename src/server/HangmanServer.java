@@ -34,13 +34,24 @@ public class HangmanServer {
             System.out.println("Jogador 1 entrou. A aguardar mais jogadores (" + Protocol.LOBBY_TIMEOUT_MS / 1000 + "s timeout)...");
 
             // depois do primeiro, timeout de lobby para os restantes
+            // TODO: O timeout do lobby não é absoluto. O requisito pede que expire 20s após a entrada do 1º jogador.
+            // Atualmente, cada accept() reinicia a janela de 20s. Deve ser calculado o tempo restante.
             serverSocket.setSoTimeout(Protocol.LOBBY_TIMEOUT_MS);
             try {
                 while (players.size() < Protocol.MAX_PLAYERS) {
                     Socket socket = serverSocket.accept();
-                    int id = players.size() + 1;
-                    players.add(new ClientHandler(socket, id));
-                    System.out.println("Jogador " + id + " entrou.");
+                    //sincronizacao p garantir que a leitura do size e adicionar o jogador seja atomico
+                    //sem isto tinhamos race condition
+                    synchronized (players) {
+                        if (players.size() < Protocol.MAX_PLAYERS) {
+                            int id = players.size() + 1;
+                            players.add(new ClientHandler(socket, id));
+                            System.out.println("Jogador " + id + " entrou.");
+                        } else {
+                            //rejeita a ligacao caso o lobby tenha enchido enquanto esperavamos
+                            socket.close();
+                        }
+                    }
                 }
             } catch (SocketTimeoutException e) {
                 System.out.println("Timeout do lobby. A iniciar com " + players.size() + " jogador(es).");
@@ -135,7 +146,9 @@ public class HangmanServer {
 
                 System.out.println("Jogador " + player.getPlayerId() + " jogou: " + guess);
 
-                // fix 3: verificar ANTES de processar para detetar quem completou a palavra
+                // FIX: A lógica atual apenas premeia o primeiro jogador que completa a palavra. 
+                // O requisito pede: "Victory: One or more players guess the full word in the same round."
+                // Todos os que contribuem corretamente na ronda em que a palavra é completada devem ganhar.
                 boolean wasComplete = gameState.isWordGuessed();
                 gameState.processGuess(guess);
 
