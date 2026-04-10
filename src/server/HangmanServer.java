@@ -146,6 +146,9 @@ public class HangmanServer {
 
             // processa guesses e determina vencedores
             List<Integer> winners = new ArrayList<>();
+            List<String> validContributions = new ArrayList<>();
+            boolean wordGuessedBeforeRound = gameState.isWordGuessed();
+
             for (ClientHandler player : players) {
                 String guess = player.getCurrentGuess();
 
@@ -156,17 +159,31 @@ public class HangmanServer {
                     continue;
                 }
 
+                guess = guess.toUpperCase();
                 System.out.println("Jogador " + player.getPlayerId() + " jogou: " + guess);
 
-                // FIX: A lógica atual apenas premeia o primeiro jogador que completa a palavra. 
-                // O requisito pede: "Victory: One or more players guess the full word in the same round."
-                // Todos os que contribuem corretamente na ronda em que a palavra é completada devem ganhar.
-                boolean wasComplete = gameState.isWordGuessed();
-                gameState.processGuess(guess);
-
-                if (!wasComplete && gameState.isWordGuessed()) {
-                    winners.add(player.getPlayerId());
+                if (guess.equals(gameState.getWord())) {
+                    if (!winners.contains(player.getPlayerId())) winners.add(player.getPlayerId());
+                    gameState.processGuess(guess);
+                } else if (guess.length() == 1) {
+                    boolean wasUsedBefore = gameState.getUsedLettersString().replaceAll(" ", "").contains(guess);
+                    gameState.processGuess(guess);
+                    
+                    if (gameState.getWord().contains(guess) && !wasUsedBefore) {
+                        validContributions.add(guess);
+                        if (!winners.contains(player.getPlayerId())) winners.add(player.getPlayerId());
+                    } else if (gameState.getWord().contains(guess) && validContributions.contains(guess)) {
+                        if (!winners.contains(player.getPlayerId())) winners.add(player.getPlayerId());
+                    }
+                } else {
+                    gameState.processGuess(guess);
                 }
+            }
+
+            if (!gameState.isWordGuessed()) {
+                winners.clear();
+            } else {
+                gameState.setFinished(true);
             }
 
             // verifica condição de fim
