@@ -14,9 +14,9 @@ public class HangmanWordsTest {
     // Tamanho e cobertura
 
     @Test
-    void sizeAtLeast100() {
-        assertTrue(HangmanWords.size() >= 100,
-                "Esperado >= 100 palavras, encontrado: " + HangmanWords.size());
+    void sizeIs100() {
+        assertTrue(HangmanWords.size() == 100,
+                "Esperadas 100 palavras, encontrado: " + HangmanWords.size());
     }
 
     @Test

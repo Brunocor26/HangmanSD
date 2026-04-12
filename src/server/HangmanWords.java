@@ -3,49 +3,50 @@ package src.server;
 import java.util.Random;
 
 public class HangmanWords {
+    // TODO: A lista de palavras tem 140 elementos. O requisito pede uma lista fixa de exatamente 100 palavras.
     private static final String[] WORDS = {
         // Animais
         "GATO", "CACAO", "LEAO", "TIGRE", "ZEBRA",
-        "URSO", "LOBO", "AGUIA", "COBRA", "PEIXE",
+        "URSO", 
         // Países
         "BRASIL", "FRANCA", "JAPAO", "CANADA", "INDIA",
-        "ANGOLA", "RUSSIA", "EGITO", "CHILE", "PERU",
+        "ANGOLA", 
         // Desportos
         "FUTEBOL", "TENIS", "NATACAO", "BOXE", "CICLISMO",
-        "VOLEI", "RUGBY", "GOLFE", "HIPISMO", "JUDO",
+        "VOLEI",
         // Alimentos
         "PIZZA", "MASSA", "ARROZ", "FEIJAO", "SOPA",
-        "BACALHAU", "FRANGO", "TOMATE", "CEBOLA", "ALHO",
+        "BACALHAU", 
         // Profissões
         "MEDICO", "PILOTO", "PINTOR", "MUSICO", "JUIZ",
-        "ATOR", "CHEF", "ARQUITETO", "DENTISTA", "FARMACEUTICO",
+        "ATOR", "CHEF",
         // Objetos
         "MESA", "CADEIRA", "JANELA", "ESPELHO", "LAMPADA",
-        "TECLADO", "MONITOR", "TELEFONE", "RELOGIO", "MOCHILA",
+        "TECLADO", "MONITOR", 
         // Natureza
         "MONTANHA", "FLORESTA", "OCEANO", "DESERTO", "VULCAO",
-        "GLACIAR", "PANTANO", "SAVANA", "TUNDRA", "RECIFE",
+        "GLACIAR", "PANTANO",
         // Cores
         "VERMELHO", "AZUL", "VERDE", "AMARELO", "LARANJA",
-        "ROXO", "ROSA", "CINZENTO", "BRANCO", "CASTANHO",
+        "ROXO", "ROSA", "CINZENTO",
         // Transportes
         "AVIAO", "COMBOIO", "BARCO", "MOTA", "HELICOPTERO",
-        "SUBMARINO", "TRATOR", "AUTOCARRO", "BICICLETA", "FOGUETE",
+        "SUBMARINO", "TRATOR", "AUTOCARRO",
         // Tecnologia
         "SERVIDOR", "REDE", "PROTOCOLO", "SOCKET", "THREAD",
-        "ALGORITMO", "SOFTWARE", "HARDWARE", "COMPILADOR", "MEMORIA",
+        "ALGORITMO", "SOFTWARE", "COMPILADOR",
         // Plantas
         "LOUREIRO", "TULIPA", "ORQUIDEA", "CACTO", "BAMBU",
-        "PINHEIRO", "CARVALHO", "OLIVEIRA", "GIRASSOL", "MARGARIDA",
+        "PINHEIRO", "CARVALHO", "OLIVEIRA",
         // Instrumentos
         "GUITARRA", "PIANO", "VIOLINO", "FLAUTA", "BATERIA",
-        "TROMPETE", "SAXOFONE", "HARPA", "CLARINETE", "ACORDEAO",
+        "TROMPETE", "SAXOFONE", "HARPA",
         // Planetas
         "MERCURIO", "VENUS", "MARTE", "JUPITER", "SATURNO",
-        "URANO", "NEPTUNO", "PLUTAO", "TERRA", "SOL",
+        "URANO", "TERRA", "SOL",
         // Materiais
         "MADEIRA", "METAL", "VIDRO", "PEDRA", "PLASTICO",
-        "BORRACHA", "TECIDO", "CERAMICA", "CIMENTO", "BRONZE"
+        "BORRACHA", "TECIDO"
     };
 
     private static final Random RANDOM = new Random();

@@ -32,19 +32,42 @@ public class HangmanServer {
             Socket first = serverSocket.accept();
             players.add(new ClientHandler(first, 1));
             System.out.println("Jogador 1 entrou. A aguardar mais jogadores (" + Protocol.LOBBY_TIMEOUT_MS / 1000 + "s timeout)...");
+            // Prazo absoluto para o lobby (20s após o primeiro jogador entrar)
+            long lobbyEndTime = System.currentTimeMillis() + Protocol.LOBBY_TIMEOUT_MS;
 
-            // depois do primeiro, timeout de lobby para os restantes
-            serverSocket.setSoTimeout(Protocol.LOBBY_TIMEOUT_MS);
-            try {
-                while (players.size() < Protocol.MAX_PLAYERS) {
+            while (players.size() < Protocol.MAX_PLAYERS) {
+                long timeLeftMs = lobbyEndTime - System.currentTimeMillis();
+                if (timeLeftMs <= 0) break;
+
+                // Se faltarem mais de 5s, esperamos até chegar à marca dos 5s
+                // Se faltarem 5s ou menos, usamos timeout de 1s para fazer a contagem no ecrã
+                int nextTimeout = (timeLeftMs > 5000) ? (int)(timeLeftMs - 5000) : 1000;
+
+                try {
+                    serverSocket.setSoTimeout(nextTimeout);
                     Socket socket = serverSocket.accept();
-                    int id = players.size() + 1;
-                    players.add(new ClientHandler(socket, id));
-                    System.out.println("Jogador " + id + " entrou.");
+                    synchronized (players) {
+                        if (players.size() < Protocol.MAX_PLAYERS) {
+                            int id = players.size() + 1;
+                            players.add(new ClientHandler(socket, id));
+                            System.out.println("Jogador " + id + " entrou.");
+                        } else {
+                            socket.close();
+                        }
+                    }
+                } catch (SocketTimeoutException e) {
+                    // Acontece quando o timeout de 'nextTimeout' expira
+                    long remaining = lobbyEndTime - System.currentTimeMillis();
+                    if (remaining <= 5000 && remaining > 0) {
+                        System.out.println("Lobby fecha em " + (remaining / 1000 + 1) + " segundos...");
+                    }
+                } catch (IOException e) {
+                    System.out.println("Erro ao aceitar jogador: " + e.getMessage());
+                    break;
                 }
-            } catch (SocketTimeoutException e) {
-                System.out.println("Timeout do lobby. A iniciar com " + players.size() + " jogador(es).");
             }
+
+            System.out.println("Lobby fechado. Jogadores totais: " + players.size());
 
             if (players.size() < Protocol.MIN_PLAYERS) {
                 System.out.println("Jogadores insuficientes (mínimo: " + Protocol.MIN_PLAYERS + "). A terminar.");
@@ -123,6 +146,9 @@ public class HangmanServer {
 
             // processa guesses e determina vencedores
             List<Integer> winners = new ArrayList<>();
+            List<String> validContributions = new ArrayList<>();
+            boolean wordGuessedBeforeRound = gameState.isWordGuessed();
+
             for (ClientHandler player : players) {
                 String guess = player.getCurrentGuess();
 
@@ -133,15 +159,31 @@ public class HangmanServer {
                     continue;
                 }
 
+                guess = guess.toUpperCase();
                 System.out.println("Jogador " + player.getPlayerId() + " jogou: " + guess);
 
-                // fix 3: verificar ANTES de processar para detetar quem completou a palavra
-                boolean wasComplete = gameState.isWordGuessed();
-                gameState.processGuess(guess);
-
-                if (!wasComplete && gameState.isWordGuessed()) {
-                    winners.add(player.getPlayerId());
+                if (guess.equals(gameState.getWord())) {
+                    if (!winners.contains(player.getPlayerId())) winners.add(player.getPlayerId());
+                    gameState.processGuess(guess);
+                } else if (guess.length() == 1) {
+                    boolean wasUsedBefore = gameState.getUsedLettersString().replaceAll(" ", "").contains(guess);
+                    gameState.processGuess(guess);
+                    
+                    if (gameState.getWord().contains(guess) && !wasUsedBefore) {
+                        validContributions.add(guess);
+                        if (!winners.contains(player.getPlayerId())) winners.add(player.getPlayerId());
+                    } else if (gameState.getWord().contains(guess) && validContributions.contains(guess)) {
+                        if (!winners.contains(player.getPlayerId())) winners.add(player.getPlayerId());
+                    }
+                } else {
+                    gameState.processGuess(guess);
                 }
+            }
+
+            if (!gameState.isWordGuessed()) {
+                winners.clear();
+            } else {
+                gameState.setFinished(true);
             }
 
             // verifica condição de fim
@@ -173,4 +215,25 @@ public class HangmanServer {
 
         System.out.println("Jogo terminado.");
     }
+
+    public final static void clearConsole()
+{
+    try
+    {
+        final String os = System.getProperty("os.name");
+        
+        if (os.contains("Windows"))
+        {
+            Runtime.getRuntime().exec(new String[]{"cmd", "/c", "cls"});
+        }
+        else //linux e mac(?)
+        {
+            Runtime.getRuntime().exec(new String[]{"sh", "-c", "clear"});
+        }
+    }
+    catch (final Exception e)
+    {
+        //  Handle any exceptions.
+    }
+}
 }

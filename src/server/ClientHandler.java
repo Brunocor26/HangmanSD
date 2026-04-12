@@ -12,6 +12,8 @@ import java.net.SocketTimeoutException;
 import src.common.Protocol;
 
 // represents one player's connection; used by HangmanServer to send/receive messages
+
+//we use the thread-per-connection architecture
 public class ClientHandler {
 
     private final Socket socket;
@@ -101,7 +103,7 @@ public class ClientHandler {
     }
 
     /**
-     * sets round timeout via socket SO_TIMEOUT so readLine() unblocks after ms.
+     * sets round timeout via socket SO_TIMEOUT- readLine() unblocks after ms.
      */
     public void setRoundTimeout(int ms) {
         try {

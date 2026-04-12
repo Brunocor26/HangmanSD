@@ -78,9 +78,9 @@ public class HangmanClient {
         playerId = Integer.parseInt(parts[1]);
         totalPlayers = Integer.parseInt(parts[2]);
 
-        System.out.println("\n╔══════════════════════════════╗");
-        System.out.println("║      BEM-VINDO AO HANGMAN    ║");
-        System.out.println("╚══════════════════════════════╝");
+        System.out.println("--------------------------------");
+        System.out.println("|      BEM-VINDO AO HANGMAN    |");
+        System.out.println("--------------------------------");
         System.out.printf("  És o Jogador %d  |  Total: %d jogadores%n", playerId, totalPlayers);
         System.out.println("  A aguardar início do jogo...");
     }
@@ -92,7 +92,7 @@ public class HangmanClient {
         int attempts = Integer.parseInt(parts[2]);
         roundTimeoutMs = Integer.parseInt(parts[3]);
 
-        System.out.println("\n══════════════ JOGO INICIADO ══════════════");
+        System.out.println("\n------------------- JOGO INICIADO -------------------");
         System.out.printf("  Tempo por ronda: %d segundos%n", roundTimeoutMs / 1000);
         printState(mask, attempts, "");
     }
@@ -105,7 +105,7 @@ public class HangmanClient {
         int attempts = Integer.parseInt(parts[3]);
         String usedLetters = parts.length > 4 ? parts[4] : "";
 
-        System.out.printf("%n════════════════ Ronda %d ════════════════%n", round);
+        System.out.printf("------------------- Ronda %d -------------------%n", round);
         printState(mask, attempts, usedLetters);
 
         sendGuess();
@@ -128,13 +128,13 @@ public class HangmanClient {
         String winnerIds = parts[2];
         String word = parts[3];
 
-        System.out.println("\n╔══════════════════════════════╗");
-        System.out.println("║         FIM DO JOGO          ║");
-        System.out.println("╚══════════════════════════════╝");
+        System.out.println("\n-----------------------------");
+        System.out.println("|         FIM DO JOGO         |");
+        System.out.println("-----------------------------");
         System.out.println("  A palavra era: " + word);
 
         if (winnerIds.contains(String.valueOf(playerId))) {
-            System.out.println("  PARABÉNS! Você ganhou! \uD83C\uDF89");
+            System.out.println("  PARABÉNS! Ganhou o Hangman! \uD83C\uDF89");
         } else {
             System.out.println("  O(s) jogador(es) " + winnerIds + " ganhou/ganharam.");
             System.out.println("  Melhor sorte na próxima!");
@@ -146,9 +146,9 @@ public class HangmanClient {
         String[] parts = message.split(" ", 3);
         String word = parts[2];
 
-        System.out.println("\n╔══════════════════════════════╗");
-        System.out.println("║         FIM DO JOGO          ║");
-        System.out.println("╚══════════════════════════════╝");
+        System.out.println("\n-----------------------------");
+        System.out.println("|         FIM DO JOGO          |");
+        System.out.println("-----------------------------");
         System.out.println("  Ninguém adivinhou a palavra.");
         System.out.println("  A palavra era: " + word);
         printHangman(0);
