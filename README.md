@@ -6,6 +6,8 @@ Trabalho Prático 1 da Unidade Curricular de Sistemas Distribuídos do 3º ano d
 
 Implementação de um **Jogo da Forca multijogador síncrono**, onde 2 a 4 jogadores participam em simultâneo para descobrir uma palavra oculta comum. A aplicação segue uma arquitetura **cliente-servidor** com comunicação via **TCP/IP**.
 
+Este projeto utiliza a biblioteca externa `myinputs` para a leitura de dados no terminal do cliente.
+
 ## Estrutura do Repositório
 
 ```
@@ -25,7 +27,9 @@ Implementação de um **Jogo da Forca multijogador síncrono**, onde 2 a 4 jogad
 │       ├── ProtocolTest.java       # Testes unitários do protocolo
 │       └── HangmanWordsTest.java   # Testes unitários da lista de palavras
 ├── lib/
-│   └── junit-platform-console-standalone.jar
+│   ├── junit-platform-console-standalone.jar  # Para testes JUnit 5
+│   └── myinputs.jar                           # Biblioteca para leitura de dados
+├── Makefile                     # Automação de compilação e execução
 ├── diagrama.md
 └── README.md
 ```
@@ -33,50 +37,34 @@ Implementação de um **Jogo da Forca multijogador síncrono**, onde 2 a 4 jogad
 ## Requisitos
 
 - **Java** 11 ou superior
-- Sem dependências externas para compilar/executar o jogo
-- JUnit 5 (já incluído em `lib/`) apenas para os testes
+- **Make** (opcional, para usar o Makefile)
+- Bibliotecas em `lib/` (`myinputs.jar` e `junit-platform-console-standalone.jar`)
 
-## Compilação
+## Compilação e Execução (Via Makefile)
 
-A partir da raiz do projeto:
+A forma mais simples de gerir o projeto é através do `Makefile` incluído na raiz.
 
+### Compilar tudo
 ```bash
-javac src/common/Protocol.java src/server/*.java src/client/*.java
+make
 ```
-
-## Execução
 
 ### Iniciar o Servidor
-
 ```bash
-java src.server.HangmanServer
+make run-server
 ```
 
-O servidor fica à escuta na porta **11111**. Aguarda o primeiro jogador sem timeout; após a entrada do primeiro, espera mais **20 segundos** por outros jogadores (máximo 4) antes de iniciar o jogo.
-
-### Ligar um Cliente
-
+### Iniciar o Cliente
 ```bash
-# Servidor local
-java src.client.HangmanClient
-
-# Servidor remoto
-java src.client.HangmanClient <host>
+make run-client
 ```
 
-### Correr os Testes
-
+### Limpar ficheiros compilados
 ```bash
-javac -cp lib/junit-platform-console-standalone.jar \
-      src/common/Protocol.java src/server/HangmanWords.java \
-      src/server/HangmanState.java src/test/*.java
-
-java -jar lib/junit-platform-console-standalone.jar \
-     --class-path . \
-     --select-class=src.test.HangmanStateTest \
-     --select-class=src.test.ProtocolTest \
-     --select-class=src.test.HangmanWordsTest
+make clean
 ```
+
+---
 
 ## Regras do Jogo
 
@@ -90,10 +78,11 @@ java -jar lib/junit-platform-console-standalone.jar \
 - A comparação é **case-insensitive**.
 - O jogador começa com **6 tentativas**.
 - Uma tentativa é consumida quando:
-  - A letra não existe na palavra
-  - A palavra proposta está incorreta
-  - O jogador não responde dentro do tempo limite
+  - A letra não existe na palavra.
+  - A palavra proposta está incorreta.
+  - O jogador não responde dentro do tempo limite (timeout).
 - Letra já tentada anteriormente **não consome tentativa**.
+- **Concorrência:** Se múltiplos jogadores acertarem na palavra ou na mesma letra correta na mesma ronda, todos são considerados vencedores dessa jogada.
 - O jogo termina com **vitória** se algum jogador adivinhar a palavra, ou com **derrota** se as tentativas chegarem a 0.
 
 ## Protocolo de Comunicação

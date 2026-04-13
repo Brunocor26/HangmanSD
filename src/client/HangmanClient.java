@@ -84,7 +84,7 @@ public class HangmanClient {
         System.out.println("  A aguardar início do jogo...");
     }
 
-    // START <mask> <attempts> <roundTimeoutMs>
+    // START <mask} <attempts> <roundTimeoutMs>
     private void handleStart(String message) {
         String[] parts = message.split(" ");
         String mask = parts[1];
@@ -96,7 +96,7 @@ public class HangmanClient {
         printState(mask, attempts, "");
     }
 
-    // ROUND <k> <mask> <attempts> <usedLetters>
+    // ROUND <k> <mask} <attempts> <usedLetters>
     private void handleRound(String message) throws IOException {
         String[] parts = message.split(" ", 5);
         int round = Integer.parseInt(parts[1]);
@@ -110,7 +110,7 @@ public class HangmanClient {
         sendGuess();
     }
 
-    // STATE <mask> <attempts> <usedLetters>
+    // STATE <mask} <attempts> <usedLetters>
     private void handleState(String message) {
         String[] parts = message.split(" ", 4);
         String mask = parts[1];
@@ -133,7 +133,7 @@ public class HangmanClient {
         System.out.println("  A palavra era: " + word);
 
         if (winnerIds.contains(String.valueOf(playerId))) {
-            System.out.println("  PARABÉNS! Ganhou o Hangman! \uD83C\uDF89");
+            System.out.println("  PARABÉNS! Ganhou o jogo Hangman!");
         } else {
             System.out.println("  O(s) jogador(es) " + winnerIds + " ganhou/ganharam.");
             System.out.println("  Melhor sorte na próxima!");
