@@ -2,7 +2,7 @@ package src.client;
 
 import java.io.*;
 import java.net.*;
-import java.util.Scanner;
+import myinputs.Ler;
 import src.common.Protocol;
 
 public class HangmanClient {
@@ -10,7 +10,6 @@ public class HangmanClient {
     private Socket socket;
     private PrintWriter out;
     private BufferedReader in;
-    private final Scanner scanner = new Scanner(System.in);
 
     private int playerId;
     private int totalPlayers;
@@ -201,7 +200,7 @@ public class HangmanClient {
 
     private void sendGuess() {
         System.out.print("\n  A sua jogada (letra ou palavra): ");
-        String guess = scanner.nextLine().trim().toUpperCase();
+        String guess = Ler.umaString().trim().toUpperCase();
         out.println(Protocol.guess(guess));
     }
 }
