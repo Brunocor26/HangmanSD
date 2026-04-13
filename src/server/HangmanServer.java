@@ -147,13 +147,11 @@ public class HangmanServer {
             // processa guesses e determina vencedores
             List<Integer> winners = new ArrayList<>();
             List<String> validContributions = new ArrayList<>();
-            boolean wordGuessedBeforeRound = gameState.isWordGuessed();
 
             for (ClientHandler player : players) {
                 String guess = player.getCurrentGuess();
 
                 if (guess.isEmpty()) {
-                    // fix 1: timeout consome uma tentativa
                     System.out.println("Jogador " + player.getPlayerId() + " não respondeu (timeout). -1 tentativa.");
                     gameState.decrementAttempts();
                     continue;
@@ -162,45 +160,67 @@ public class HangmanServer {
                 guess = guess.toUpperCase();
                 System.out.println("Jogador " + player.getPlayerId() + " jogou: " + guess);
 
+                // Se o jogo já acabou por uma jogada anterior nesta ronda,
+                // apenas verificamos se este jogador também contribuiu para a vitória.
                 if (guess.equals(gameState.getWord())) {
                     if (!winners.contains(player.getPlayerId())) winners.add(player.getPlayerId());
                     gameState.processGuess(guess);
+                    gameState.setFinished(true);
                 } else if (guess.length() == 1) {
-                    boolean wasUsedBefore = gameState.getUsedLettersString().replaceAll(" ", "").contains(guess);
-                    gameState.processGuess(guess);
+                    String currentUsed = gameState.getUsedLettersString().replaceAll(" ", "");
+                    boolean wasUsedBeforeRound = currentUsed.contains(guess);
                     
-                    if (gameState.getWord().contains(guess) && !wasUsedBefore) {
+                    // Se a letra for correta e não tiver sido usada em rondas ANTERIORES
+                    if (gameState.getWord().contains(guess) && !wasUsedBeforeRound) {
+                        if (!winners.contains(player.getPlayerId())) winners.add(player.getPlayerId());
                         validContributions.add(guess);
-                        if (!winners.contains(player.getPlayerId())) winners.add(player.getPlayerId());
+                        gameState.processGuess(guess);
                     } else if (gameState.getWord().contains(guess) && validContributions.contains(guess)) {
+                        // Se outro jogador já jogou esta letra NESTA ronda
                         if (!winners.contains(player.getPlayerId())) winners.add(player.getPlayerId());
+                    } else {
+                        // Letra errada ou já usada em rondas anteriores
+                        gameState.processGuess(guess);
                     }
                 } else {
+                    // Palavra errada
                     gameState.processGuess(guess);
                 }
             }
 
-            if (!gameState.isWordGuessed()) {
-                winners.clear();
-            } else {
+            // Após processar todos os jogadores da ronda, verificamos se a palavra foi completada
+            if (gameState.isWordGuessed()) {
                 gameState.setFinished(true);
             }
 
-            // verifica condição de fim
-            if (!winners.isEmpty()) {
-                String winnerIds = winners.toString().replaceAll("[\\[\\] ]", "");
-                System.out.println("Vitória! Vencedor(es): " + winnerIds + " | Palavra: " + gameState.getWord());
-                for (ClientHandler player : players)
-                    player.sendEndWin(winnerIds, gameState.getWord());
-
+            // Se o jogo acabou, enviamos as mensagens finais e saímos do loop
+            if (gameState.isFinished()) {
+                if (!winners.isEmpty()) {
+                    String winnerIds = winners.toString().replaceAll("[\\[\\] ]", "");
+                    System.out.println("Vitória! Vencedor(es): " + winnerIds + " | Palavra: " + gameState.getWord());
+                    for (ClientHandler player : players)
+                        player.sendEndWin(winnerIds, gameState.getWord());
+                } else if (gameState.getAttemptsLeft() <= 0) {
+                    System.out.println("Derrota. Tentativas esgotadas. Palavra: " + gameState.getWord());
+                    for (ClientHandler player : players)
+                        player.sendEndLose(gameState.getWord());
+                } else {
+                    // Caso raro: palavra completa mas sem vencedores registados nesta ronda 
+                    // (ex: completada por erro de lógica ou timeout que não deveria acontecer)
+                    System.out.println("Fim de jogo. Palavra adivinhada: " + gameState.getWord());
+                    for (ClientHandler player : players)
+                        player.sendEndWin("Todos", gameState.getWord());
+                }
+                break; // SAI DO LOOP PRINCIPAL DO JOGO
             } else if (gameState.getAttemptsLeft() <= 0) {
+                // Caso as tentativas acabem mas isFinished ainda seja falso
                 gameState.setFinished(true);
                 System.out.println("Derrota. Tentativas esgotadas. Palavra: " + gameState.getWord());
                 for (ClientHandler player : players)
                     player.sendEndLose(gameState.getWord());
-
+                break;
             } else {
-                // envia estado atualizado e continua
+                // O jogo continua, envia o estado atualizado
                 String newMask    = gameState.getMask();
                 int newAttempts   = gameState.getAttemptsLeft();
                 String newUsed    = gameState.getUsedLettersString();
