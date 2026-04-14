@@ -9,9 +9,7 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+
 import src.common.Protocol;
 
 public class HangmanServer {
@@ -110,7 +108,7 @@ public class HangmanServer {
 
         System.out.println("Jogo iniciado! Palavra: " + gameState.getWord());
 
-        ExecutorService executor = Executors.newFixedThreadPool(players.size());
+
         int round = 0;
 
         while (!gameState.isFinished()) {
@@ -129,19 +127,22 @@ public class HangmanServer {
                 player.setRoundTimeout(Protocol.ROUND_TIMEOUT_MS);
             }
 
-            // recolhe guesses de todos em paralelo
-            List<Future<?>> futures = new ArrayList<>();
+            // recolhe guesses de todos em paralelo usando a API nativa de Threads
+            List<Thread> threads = new ArrayList<>();
             for (ClientHandler player : players) {
-                futures.add(executor.submit(() -> {
+                Thread t = new Thread(() -> {
                     try {
                         player.waitGuess();
                     } catch (IOException e) {
                         System.out.println("Jogador " + player.getPlayerId() + " desconectou-se.");
                     }
-                }));
+                });
+                threads.add(t);
+                t.start();
             }
-            for (Future<?> f : futures) {
-                try { f.get(); } catch (Exception ignored) {}
+            // Aguarda por todas as threads desta ronda terminarem (barreira de sincronização simples)
+            for (Thread t : threads) {
+                try { t.join(); } catch (InterruptedException ignored) {}
             }
 
             // processa guesses e determina vencedores
@@ -229,7 +230,7 @@ public class HangmanServer {
             }
         }
 
-        executor.shutdown();
+
         for (ClientHandler player : players)
             player.close();
 
