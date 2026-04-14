@@ -18,8 +18,10 @@ clean:
 	@echo "Limpeza concluída."
 
 # Atalhos para correr o Servidor e o Cliente
+IP ?= localhost
+
 run-server:
 	java -cp "$(BIN):$(LIB)" src.server.HangmanServer
 
 run-client:
-	java -cp "$(BIN):$(LIB)" src.client.HangmanClient localhost
+	java -cp "$(BIN):$(LIB)" src.client.HangmanClient $(IP)

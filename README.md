@@ -59,6 +59,12 @@ make run-server
 make run-client
 ```
 
+ou caso seja a um servidor em outro pc:
+
+```bash
+make run-client <ip>
+```
+
 ### Limpar ficheiros compilados
 ```bash
 make clean
