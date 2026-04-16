@@ -110,10 +110,19 @@ public class HangmanServer {
 
 
         int round = 0;
+        List<ClientHandler> activePlayers = new ArrayList<>(players);
 
         while (!gameState.isFinished()) {
             round++;
             gameState.setRound(round);
+
+            if (activePlayers.size() < Protocol.MIN_PLAYERS) {
+                System.out.println("Jogadores insuficientes para continuar (mínimo: " + Protocol.MIN_PLAYERS + ").");
+                for (ClientHandler p : activePlayers) {
+                    p.sendEndLose(gameState.getWord());
+                }
+                break;
+            }
 
             String mask        = gameState.getMask();
             int attempts       = gameState.getAttemptsLeft();
@@ -122,19 +131,23 @@ public class HangmanServer {
             System.out.println("\n-- Ronda " + round + " | " + mask + " | tentativas: " + attempts);
 
             // envia ROUND a todos e define timeout por ronda
-            for (ClientHandler player : players) {
+            for (ClientHandler player : activePlayers) {
                 player.sendRound(round, mask, attempts, usedLetters);
                 player.setRoundTimeout(Protocol.ROUND_TIMEOUT_MS);
             }
 
             // recolhe guesses de todos em paralelo usando a API nativa de Threads
             List<Thread> threads = new ArrayList<>();
-            for (ClientHandler player : players) {
+            List<ClientHandler> disconnectedThisRound = new ArrayList<>();
+            for (ClientHandler player : activePlayers) {
                 Thread t = new Thread(() -> {
                     try {
                         player.waitGuess();
                     } catch (IOException e) {
                         System.out.println("Jogador " + player.getPlayerId() + " desconectou-se.");
+                        synchronized (disconnectedThisRound) {
+                            disconnectedThisRound.add(player);
+                        }
                     }
                 });
                 threads.add(t);
@@ -145,11 +158,14 @@ public class HangmanServer {
                 try { t.join(); } catch (InterruptedException ignored) {}
             }
 
+            // Remove os jogadores que se desconectaram nesta ronda
+            activePlayers.removeAll(disconnectedThisRound);
+
             // processa guesses e determina vencedores
             List<Integer> winners = new ArrayList<>();
             List<String> validContributions = new ArrayList<>();
 
-            for (ClientHandler player : players) {
+            for (ClientHandler player : activePlayers) {
                 String guess = player.getCurrentGuess();
 
                 if (guess.isEmpty()) {
@@ -199,17 +215,17 @@ public class HangmanServer {
                 if (!winners.isEmpty()) {
                     String winnerIds = winners.toString().replaceAll("[\\[\\] ]", "");
                     System.out.println("Vitória! Vencedor(es): " + winnerIds + " | Palavra: " + gameState.getWord());
-                    for (ClientHandler player : players)
+                    for (ClientHandler player : activePlayers)
                         player.sendEndWin(winnerIds, gameState.getWord());
                 } else if (gameState.getAttemptsLeft() <= 0) {
                     System.out.println("Derrota. Tentativas esgotadas. Palavra: " + gameState.getWord());
-                    for (ClientHandler player : players)
+                    for (ClientHandler player : activePlayers)
                         player.sendEndLose(gameState.getWord());
                 } else {
                     // Caso raro: palavra completa mas sem vencedores registados nesta ronda 
                     // (ex: completada por erro de lógica ou timeout que não deveria acontecer)
                     System.out.println("Fim de jogo. Palavra adivinhada: " + gameState.getWord());
-                    for (ClientHandler player : players)
+                    for (ClientHandler player : activePlayers)
                         player.sendEndWin("Todos", gameState.getWord());
                 }
                 break; // SAI DO LOOP PRINCIPAL DO JOGO
@@ -217,7 +233,7 @@ public class HangmanServer {
                 // Caso as tentativas acabem mas isFinished ainda seja falso
                 gameState.setFinished(true);
                 System.out.println("Derrota. Tentativas esgotadas. Palavra: " + gameState.getWord());
-                for (ClientHandler player : players)
+                for (ClientHandler player : activePlayers)
                     player.sendEndLose(gameState.getWord());
                 break;
             } else {
@@ -225,7 +241,7 @@ public class HangmanServer {
                 String newMask    = gameState.getMask();
                 int newAttempts   = gameState.getAttemptsLeft();
                 String newUsed    = gameState.getUsedLettersString();
-                for (ClientHandler player : players)
+                for (ClientHandler player : activePlayers)
                     player.sendState(newMask, newAttempts, newUsed);
             }
         }

@@ -91,7 +91,10 @@ public class ClientHandler {
         currentGuess = "";
         try {
             String line = in.readLine();
-            if (line != null && line.startsWith(Protocol.GUESS + " ")) {
+            if (line == null) {
+                throw new IOException("Client disconnected");
+            }
+            if (line.startsWith(Protocol.GUESS + " ")) {
                 currentGuess = line.substring(Protocol.GUESS.length() + 1).trim();
             }
         } catch (SocketTimeoutException e) {

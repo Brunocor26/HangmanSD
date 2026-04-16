@@ -86,6 +86,7 @@ public class HangmanClient {
 
     // START <mask} <attempts> <roundTimeoutMs>
     private void handleStart(String message) {
+        clearScreen();
         String[] parts = message.split(" ");
         String mask = parts[1];
         int attempts = Integer.parseInt(parts[2]);
@@ -98,6 +99,7 @@ public class HangmanClient {
 
     // ROUND <k> <mask} <attempts> <usedLetters>
     private void handleRound(String message) throws IOException {
+        clearScreen();
         String[] parts = message.split(" ", 5);
         int round = Integer.parseInt(parts[1]);
         String mask = parts[2];
@@ -112,6 +114,7 @@ public class HangmanClient {
 
     // STATE <mask} <attempts> <usedLetters>
     private void handleState(String message) {
+        clearScreen();
         String[] parts = message.split(" ", 4);
         String mask = parts[1];
         int attempts = Integer.parseInt(parts[2]);
@@ -123,6 +126,7 @@ public class HangmanClient {
 
     // END WIN <winnerIds> <word>
     private void handleEndWin(String message) {
+        clearScreen();
         String[] parts = message.split(" ", 4);
         String winnerIds = parts[2];
         String word = parts[3];
@@ -142,6 +146,7 @@ public class HangmanClient {
 
     // END LOSE <word>
     private void handleEndLose(String message) {
+        clearScreen();
         String[] parts = message.split(" ", 3);
         String word = parts[2];
 
@@ -154,6 +159,11 @@ public class HangmanClient {
     }
 
     // Display helpers
+
+    private void clearScreen() {
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
+    }
 
     private void printState(String mask, int attempts, String usedLetters) {
         System.out.println();
