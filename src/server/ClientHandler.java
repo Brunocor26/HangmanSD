@@ -85,6 +85,8 @@ public class ClientHandler {
      * called by HangmanServer at the beginning of each round.
      * sets the timeout and awaits client GUESS.
      * if timeout expires, GUESS "".
+     * 
+     * has synchronized to avoid race conditions and to assure only one client is changing the variable currentGuess
      */
     public synchronized void waitGuess() throws IOException {
         guessReceived = false;

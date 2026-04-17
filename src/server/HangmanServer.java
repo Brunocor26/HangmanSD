@@ -4,27 +4,49 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
-
 import src.common.Protocol;
 
 public class HangmanServer {
 
+    //array of client handlers, 1 per client
     private final ArrayList<ClientHandler> players = new ArrayList<>();
+    //one gamestate shared by all the cliens
     private HangmanState gameState;
 
     public static void main(String[] args) {
-        new HangmanServer().start();
+        try {
+            new HangmanServer().start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    public void start() {
+    public void start() throws Exception {
+        //retirado da aula pratica 2
+        InetAddress host = null;
+        host = InetAddress.getLocalHost();
+        byte ip[] = host.getAddress();
+        
+        String publicIp = "Desconhecido"; //por defeito, caso encontre muda
+        try {
+            java.net.URL url = java.net.URI.create("http://checkip.amazonaws.com").toURL();
+            java.io.BufferedReader in = new java.io.BufferedReader(new java.io.InputStreamReader(url.openStream()));
+            publicIp = in.readLine().trim();
+        } catch (Exception e) {
+            // caso nao haja internet ou algo do genero
+            System.out.println("Não é possível mostrar o IP publico, mas o jogo continua.");
+        }
+
+        //iniciamos um serversocket do servidor
         try (ServerSocket serverSocket = new ServerSocket(Protocol.PORT)) {
             gameState = new HangmanState(HangmanWords.getRandomWord());
-            System.out.println("Servidor iniciado na porta " + Protocol.PORT + ". À espera de jogadores...");
+            System.out.println("Servidor iniciado no IP Local: " + host.getHostAddress() + " | IP Público: " + publicIp + " | Porta: " + Protocol.PORT + ". À espera de jogadores...");
 
             // aguarda primeiro jogador sem timeout
             Socket first = serverSocket.accept();

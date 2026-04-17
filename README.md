@@ -8,32 +8,6 @@ Implementação de um **Jogo da Forca multijogador síncrono**, onde 2 a 4 jogad
 
 Este projeto utiliza a biblioteca externa `myinputs` para a leitura de dados no terminal do cliente.
 
-## Estrutura do Repositório
-
-```
-.
-├── src/
-│   ├── server/
-│   │   ├── HangmanServer.java      # Servidor principal (ponto de entrada)
-│   │   ├── ClientHandler.java      # Ligação e I/O de cada jogador
-│   │   ├── HangmanState.java       # Estado partilhado do jogo (thread-safe)
-│   │   └── HangmanWords.java       # Lista de 140 palavras e seleção aleatória
-│   ├── client/
-│   │   └── HangmanClient.java      # Cliente de terminal (ponto de entrada)
-│   ├── common/
-│   │   └── Protocol.java           # Constantes e builders do protocolo
-│   └── test/
-│       ├── HangmanStateTest.java   # Testes unitários da lógica de jogo
-│       ├── ProtocolTest.java       # Testes unitários do protocolo
-│       └── HangmanWordsTest.java   # Testes unitários da lista de palavras
-├── lib/
-│   ├── junit-platform-console-standalone.jar  # Para testes JUnit 5
-│   └── myinputs.jar                           # Biblioteca para leitura de dados
-├── Makefile                     # Automação de compilação e execução
-├── diagrama.md
-└── README.md
-```
-
 ## Requisitos
 
 - **Java** 11 ou superior
@@ -42,7 +16,7 @@ Este projeto utiliza a biblioteca externa `myinputs` para a leitura de dados no 
 
 ## Compilação e Execução (Via Makefile)
 
-A forma mais simples de gerir o projeto é através do `Makefile` incluído na raiz.
+A forma mais simples de gerir o projeto é através do `Makefile` incluído.
 
 ### Compilar tudo
 ```bash
