@@ -12,7 +12,7 @@ public class HangmanState {
     private boolean finished;
 
     public HangmanState(String word) {
-        this.word = word.toUpperCase();  //to secure that caps dont matter
+        this.word = word.toUpperCase(); // to secure that caps dont matter
         this.placeholder = new char[word.length()];
         this.attemptsLeft = Protocol.MAX_ATTEMPTS;
         this.usedLetters = new ArrayList<>();
@@ -23,15 +23,19 @@ public class HangmanState {
             placeholder[i] = '_';
     }
 
-    //game logic
+    // game logic
 
     public synchronized void processGuess(String guess) {
-        if (guess == null || guess.isEmpty() || finished) return;
+        // nao lidar com guess null (nao acontece), nem numeros, nem quando jogo esta
+        // acabado
+        if (guess == null || guess.isEmpty() || finished || isNumeric(guess))
+            return;
         guess = guess.toUpperCase();
 
         if (guess.length() == 1) {
             char letter = guess.charAt(0);
-            if (usedLetters.contains(letter)) return; //already used, no punishment 
+            if (usedLetters.contains(letter))
+                return; // already used, no punishment
             usedLetters.add(letter);
 
             boolean found = false;
@@ -41,42 +45,44 @@ public class HangmanState {
                     found = true;
                 }
             }
-            if (!found) attemptsLeft--;
+            if (!found)
+                attemptsLeft--;
 
         } else {
-            //guess is GOOD, reveal the word
+            // guess is GOOD, reveal the word
             if (guess.equals(word)) {
                 for (int i = 0; i < word.length(); i++)
                     placeholder[i] = word.charAt(i);
-            } else { //wrong guess
+            } else { // wrong guess
                 attemptsLeft--;
             }
         }
     }
 
-    //if there is any placeholder, word isnt guessed yet
+    // if there is any placeholder, word isnt guessed yet
     public synchronized boolean isWordGuessed() {
         for (char c : placeholder)
-            if (c == '_') return false;
+            if (c == '_')
+                return false;
         return true;
     }
 
-    //get the mask/placeholder
+    // get the mask/placeholder
     public synchronized String getMask() {
-        return new String(placeholder);  //makes a string out of a char array
+        return new String(placeholder); // makes a string out of a char array
     }
 
-    
     public synchronized String getUsedLettersString() {
         StringBuilder sb = new StringBuilder();
         for (Character c : usedLetters) {
-            if (sb.length() > 0) sb.append(' ');
+            if (sb.length() > 0)
+                sb.append(' ');
             sb.append(c);
         }
         return sb.toString();
     }
 
-    //getters & setters
+    // getters & setters
 
     public synchronized String getWord() {
         return word;
@@ -104,5 +110,15 @@ public class HangmanState {
 
     public synchronized void setFinished(boolean finished) {
         this.finished = finished;
+    }
+
+    // Método auxiliar
+    private boolean isNumeric(String str) {
+        try {
+            Integer.parseInt(str);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 }
