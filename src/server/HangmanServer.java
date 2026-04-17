@@ -14,7 +14,7 @@ import src.common.Protocol;
 
 public class HangmanServer {
 
-    //array of client handlers, 1 per client
+    //array of client handlers, 1 per client, recurso que vai ser partilhado e requer atencao na sincronizacao
     private final ArrayList<ClientHandler> players = new ArrayList<>();
     //one gamestate shared by all the cliens
     private HangmanState gameState;
@@ -33,20 +33,10 @@ public class HangmanServer {
         host = InetAddress.getLocalHost();
         byte ip[] = host.getAddress();
         
-        String publicIp = "Desconhecido"; //por defeito, caso encontre muda
-        try {
-            java.net.URL url = java.net.URI.create("http://checkip.amazonaws.com").toURL();
-            java.io.BufferedReader in = new java.io.BufferedReader(new java.io.InputStreamReader(url.openStream()));
-            publicIp = in.readLine().trim();
-        } catch (Exception e) {
-            // caso nao haja internet ou algo do genero
-            System.out.println("Não é possível mostrar o IP publico, mas o jogo continua.");
-        }
-
         //iniciamos um serversocket do servidor
         try (ServerSocket serverSocket = new ServerSocket(Protocol.PORT)) {
             gameState = new HangmanState(HangmanWords.getRandomWord());
-            System.out.println("Servidor iniciado no IP Local: " + host.getHostAddress() + " | IP Público: " + publicIp + " | Porta: " + Protocol.PORT + ". À espera de jogadores...");
+            System.out.println("Servidor iniciado no IP Local: " + host.getHostAddress() + " | Porta: " + Protocol.PORT + ". À espera de jogadores...");
 
             // aguarda primeiro jogador sem timeout
             Socket first = serverSocket.accept();
@@ -158,7 +148,7 @@ public class HangmanServer {
                 player.setRoundTimeout(Protocol.ROUND_TIMEOUT_MS);
             }
 
-            // recolhe guesses de todos em paralelo usando a API nativa de Threads
+            // recolhe guesses de todos em paralelo com a API nativa de Threads
             List<Thread> threads = new ArrayList<>();
             List<ClientHandler> disconnectedThisRound = new ArrayList<>();
             for (ClientHandler player : activePlayers) {
@@ -175,9 +165,13 @@ public class HangmanServer {
                 threads.add(t);
                 t.start();
             }
-            // Aguarda por todas as threads desta ronda terminarem (barreira de sincronização simples)
+            // Aguarda por todas as threads desta ronda terminarem (sincronização simples)
             for (Thread t : threads) {
-                try { t.join(); } catch (InterruptedException ignored) {}
+                try {
+                    t.join();
+                } catch (InterruptedException e) {
+                    //ignoramos
+                }
             }
 
             // Remove os jogadores que se desconectaram nesta ronda
@@ -274,25 +268,4 @@ public class HangmanServer {
 
         System.out.println("Jogo terminado.");
     }
-
-    public final static void clearConsole()
-{
-    try
-    {
-        final String os = System.getProperty("os.name");
-        
-        if (os.contains("Windows"))
-        {
-            Runtime.getRuntime().exec(new String[]{"cmd", "/c", "cls"});
-        }
-        else //linux e mac(?)
-        {
-            Runtime.getRuntime().exec(new String[]{"sh", "-c", "clear"});
-        }
-    }
-    catch (final Exception e)
-    {
-        //  Handle any exceptions.
-    }
-}
 }
