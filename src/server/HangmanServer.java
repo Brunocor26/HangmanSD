@@ -178,7 +178,8 @@ public class HangmanServer {
             activePlayers.removeAll(disconnectedThisRound);
 
             // processa guesses e determina vencedores
-            List<Integer> winners = new ArrayList<>();
+            List<Integer> wordWinners = new ArrayList<>();
+            List<Integer> letterWinners = new ArrayList<>();
             List<String> validContributions = new ArrayList<>();
 
             for (ClientHandler player : activePlayers) {
@@ -196,7 +197,7 @@ public class HangmanServer {
                 // Se o jogo já acabou por uma jogada anterior nesta ronda,
                 // apenas verificamos se este jogador também contribuiu para a vitória.
                 if (guess.equals(gameState.getWord())) {
-                    if (!winners.contains(player.getPlayerId())) winners.add(player.getPlayerId());
+                    if (!wordWinners.contains(player.getPlayerId())) wordWinners.add(player.getPlayerId());
                     gameState.processGuess(guess);
                     gameState.setFinished(true);
                 } else if (guess.length() == 1) {
@@ -205,12 +206,12 @@ public class HangmanServer {
                     
                     // Se a letra for correta e não tiver sido usada em rondas ANTERIORES
                     if (gameState.getWord().contains(guess) && !wasUsedBeforeRound) {
-                        if (!winners.contains(player.getPlayerId())) winners.add(player.getPlayerId());
+                        if (!letterWinners.contains(player.getPlayerId())) letterWinners.add(player.getPlayerId());
                         validContributions.add(guess);
                         gameState.processGuess(guess);
                     } else if (gameState.getWord().contains(guess) && validContributions.contains(guess)) {
                         // Se outro jogador já jogou esta letra NESTA ronda
-                        if (!winners.contains(player.getPlayerId())) winners.add(player.getPlayerId());
+                        if (!letterWinners.contains(player.getPlayerId())) letterWinners.add(player.getPlayerId());
                     } else {
                         // Letra errada ou já usada em rondas anteriores
                         gameState.processGuess(guess);
@@ -224,6 +225,14 @@ public class HangmanServer {
             // Após processar todos os jogadores da ronda, verificamos se a palavra foi completada
             if (gameState.isWordGuessed()) {
                 gameState.setFinished(true);
+            }
+
+            // Apenas quem acertou a palavra completa é considerado vencedor, se houver alguém
+            List<Integer> winners;
+            if (!wordWinners.isEmpty()) {
+                winners = wordWinners;
+            } else {
+                winners = letterWinners;
             }
 
             // Se o jogo acabou, enviamos as mensagens finais e saímos do loop

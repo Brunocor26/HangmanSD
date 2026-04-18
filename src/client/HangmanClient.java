@@ -136,7 +136,15 @@ public class HangmanClient {
         System.out.println("-----------------------------");
         System.out.println("  A palavra era: " + word);
 
-        if (winnerIds.contains(String.valueOf(playerId))) {
+        boolean isWinner = false;
+        for (String id : winnerIds.split(",")) {
+            if (id.trim().equals(String.valueOf(playerId))) {
+                isWinner = true;
+                break;
+            }
+        }
+
+        if (isWinner) {
             System.out.println("  PARABÉNS! Ganhou o jogo Hangman!");
         } else {
             System.out.println("  O(s) jogador(es) " + winnerIds + " ganhou/ganharam.");
